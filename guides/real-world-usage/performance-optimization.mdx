@@ -3,4 +3,212 @@ title: "Performance Tips & Optimization"
 description: "Guidance on optimizing the dependency injection container for fast startup, low memory overhead, and runtime efficiency. Covers best practices for registration, resolution, and scope lifecycles."
 ---
 
-*This page will automatically be generated from the codebase*
+# Performance Tips & Optimization
+
+Optimize your use of the BSP Dependency Injection Framework to achieve fast application startup, minimal memory overhead, and efficient runtime dependency resolution. This guide focuses exclusively on best practices and actionable steps for configuring service registration, scope management, and instance resolution that enhance performance without sacrificing correctness or flexibility.
+
+---
+
+## 1. Workflow Overview
+
+### Task Description
+Enable efficient dependency injection by applying proven performance optimization techniques within your BSP Dependency Injection setup.
+
+### Prerequisites
+- Basic familiarity with service registration concepts (Singleton, Scoped, Transient).
+- A configured `ServiceMappingStore` with registered service mappings.
+- An understanding of lifetimes and scopes from the BSP Dependency Injection Framework.
+
+### Expected Outcome
+By following this guide, you will:
+- Minimize application startup delays caused by dependency injection.
+- Reduce memory usage by managing lifetimes appropriately.
+- Increase runtime efficiency during instance resolution.
+
+### Time Estimate
+Approximately 15-30 minutes to apply and validate optimizations.
+
+### Difficulty Level
+Intermediate – Assumes knowledge of dependency injection lifecycles and service design.
+
+---
+
+## 2. Step-by-Step Instructions for Performance Optimization
+
+<Steps>
+<Step title="Step 1: Prefer Singleton Lifetime for Heavy or Shared Services">
+Services that are expensive to instantiate or have no state should be registered as Singletons.
+
+- **Action:** Use `AddSingleton<TInterface, TImplementation>()` for such services.
+- **Example:** Caching layers, configuration loaders, or shared utility classes.
+
+**Outcome:** Singleton services are instantiated once per application lifetime, reducing redundant allocations.
+
+**Verification:** Call `IntegrityCheck()` on your `ServiceMappingStore` and confirm no errors, then observe that instances are reused across calls to `GetInstance<T>()`.
+</Step>
+<Step title="Step 2: Use Scoped Lifetime for Services that Can Share State Within a Logical Unit">
+Scoped services live for the duration of a scope and allow controlled sharing.
+
+- **Action:** Register services with `AddScoped<TInterface, TImplementation>()` where appropriate.
+- **Example:** Services managing user-specific data in a web request or transactional processing.
+
+**Outcome:** Limits memory overhead across the overall app while enabling reuse within scopes.
+
+**Verification:** Instantiate a `Scope` and retrieve instances multiple times; scoped services should return the same instance within that scope.
+</Step>
+<Step title="Step 3: Avoid Unnecessary Use of Transient Lifetimes for Complex Services">
+Transient services cause new instance creation every time, which may increase CPU and memory use.
+
+- **Action:** Reserve `AddTransient<TInterface, TImplementation>()` for lightweight, stateless objects like simple DTOs or small utility classes.
+
+**Outcome:** Reduces overhead by minimizing frequent allocations.
+
+**Verification:** Monitor object creation counts via logging or profiling tools.
+</Step>
+<Step title="Step 4: Structure Constructor Dependencies to Minimize Deep Recursion During Resolution">
+Long chains of constructor dependencies increase resolution time and stack overhead.
+
+- **Action:** Refactor classes to reduce dependency depth when possible—consider patterns like Facade or Provider.
+
+**Outcome:** Faster dependency resolution and reduced risk of stack overflow in extreme cases.
+
+**Verification:** Measure resolution time of complex services and monitor call stack depth.
+</Step>
+<Step title="Step 5: Leverage Integrity Checks Early to Avoid Performance Draining Errors">
+Circular dependencies and missing mappings cause runtime errors and wasted resolution cycles.
+
+- **Action:** Always invoke `serviceMappingStore.IntegrityCheck()` after registrations to catch problems early.
+
+**Outcome:** Ensures no hidden overhead or failures during resolution.
+
+**Verification:** Successful integrity check without exceptions.
+</Step>
+<Step title="Step 6: Cache Scoped Instances Appropriately in Resolution to Prevent Re-Creation">
+The `Scope` class manages scoped instances internally to prevent redundant creations.
+
+- **Action:** Ensure `GetObjectInstance` uses the scoped instances dictionary properly.
+
+**Outcome:** Scoped objects are reused within the same scope enhancing memory and CPU efficiency.
+
+**Verification:** In debugging or logs, verify scoped instances are created once per scope.
+</Step>
+<Step title="Step 7: Avoid Registering Multiple Implementations for the Same Interface Unless Necessary">
+Multiple bindings for the same interface can lead to increased lookup overhead and ambiguity.
+
+- **Action:** Keep one-to-one interface-to-implementation mappings unless your design explicitly requires multiple.
+
+**Outcome:** Reduces overhead in type lookups during resolution.
+
+**Verification:** Inspect your `ServiceMappingStore` data to confirm unique mappings.
+</Step>
+</Steps>
+
+---
+
+## 3. Practical Examples
+
+### Efficient Service Registration
+```csharp
+var serviceMappingStore = new ServiceMappingStore();
+
+// Singleton for shared, heavy service
+serviceMappingStore.AddSingleton<ICacheService, CacheService>();
+
+// Scoped for user-related state during operations
+serviceMappingStore.AddScoped<IUserContext, UserContext>();
+
+// Transient for lightweight helper
+serviceMappingStore.AddTransient<IRequestLogger, RequestLogger>();
+
+serviceMappingStore.IntegrityCheck();
+```
+
+### Scoped Instance Resolution
+```csharp
+var scope = new Scope(serviceMappingStore);
+
+// Reused within scope
+var userContext1 = scope.GetInstance<IUserContext>();
+var userContext2 = scope.GetInstance<IUserContext>();
+
+Debug.Assert(object.ReferenceEquals(userContext1, userContext2)); // true
+
+// New transient instance each request
+var logger1 = scope.GetInstance<IRequestLogger>();
+var logger2 = scope.GetInstance<IRequestLogger>();
+
+Debug.Assert(!object.ReferenceEquals(logger1, logger2)); // true
+```
+
+### Avoiding Deep Constructor Chains
+```csharp
+// Instead of
+class ServiceA {
+  public ServiceA(ServiceB b) { ... }
+}
+class ServiceB {
+  public ServiceB(ServiceC c) { ... }
+}
+class ServiceC {
+  public ServiceC(ServiceD d) { ... }
+}
+
+// Favor flattening or using Facades
+class ServiceA {
+  public ServiceA(Facade f) { ... }
+}
+class Facade {
+  private readonly ServiceB _b;
+  private readonly ServiceC _c;
+  public Facade(ServiceB b, ServiceC c) { _b = b; _c = c; }
+  // Combine coordination logic...
+}
+```
+
+---
+
+## 4. Troubleshooting & Tips
+
+<AccordionGroup title="Common Performance Issues and Solutions">
+<Accordion title="Slow Startup Due to Heavy Object Graphs">
+- **Cause:** Excessive transient services or deeply nested dependencies.
+- **Solution:** Use Singleton for reusable heavy objects; simplify dependency chains.
+</Accordion>
+<Accordion title="Excessive Memory Use in Long-Running Applications">
+- **Cause:** Overusing Scoped or Singleton lifetimes for short-lived objects.
+- **Solution:** Audit lifetime registrations; use Transient for short-lived objects to allow quicker GC.
+</Accordion>
+<Accordion title="Circular Dependency Errors During Integrity Check">
+- **Cause:** Classes referencing each other directly or indirectly.
+- **Solution:** Refactor dependencies; use interfaces or event-based decoupling.
+</Accordion>
+<Accordion title="Unexpected New Instances of Scoped Services Within the Same Scope">
+- **Cause:** Scoped instances not cached correctly due to code bugs.
+- **Solution:** Verify scoped instance dictionary usage in `Scope.GetObjectInstance`.
+</Accordion>
+</AccordionGroup>
+
+<Tip>
+Enable diagnostic logging in your resolution process to observe when instances are created. This insight helps identify inefficient lifetimes or unexpected recreations.
+</Tip>
+
+<Tip>
+Keep the number of services registerable by your `ServiceMappingStore` minimal and focused. Over-registering unused services adds unnecessary lookup overhead.
+</Tip>
+
+---
+
+## 5. Next Steps & Related Content
+
+- Explore the [Registering and Managing Services guide](/guides/getting-started/registering-services) to master service lifetimes.
+- Consult the [Resolving Instances from the DI Scope guide](/guides/getting-started/resolving-instances) for advanced resolution techniques.
+- Review the [Validation & Troubleshooting guide](/getting-started/quickstart-experience/validation-and-troubleshooting) to enforce correctness.
+- For architectural insight, see the [System Architecture & Data Flow page](/overview/architecture-features-getting-started/architecture-visual).
+
+Implementing these optimization techniques will empower you to build high-performance .NET applications leveraging BSP Dependency Injection at scale.
+
+---
+
+
+
+
