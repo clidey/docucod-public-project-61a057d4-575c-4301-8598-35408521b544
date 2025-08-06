@@ -3,4 +3,168 @@ title: "Validation & Troubleshooting"
 description: "Identify and resolve common setup issues using integrity checks and validation steps built into the example. This page helps ensure your environment is correctly configured and guides you through the most frequent onboarding challenges."
 ---
 
-*This page will automatically be generated from the codebase*
+# Validation & Troubleshooting
+
+Ensure your setup of the BSP Dependency Injection Framework is solid by validating your service registrations and resolving common issues efficiently. This guide walks you through using the built-in integrity checks and effective troubleshooting techniques to confirm your environment is correctly configured and ready for real-world use.
+
+---
+
+## 1. Understanding the Integrity Check
+
+Before resolving any service instances, the framework requires you to validate your service registrations to detect configuration errors early. The `IntegrityCheck()` method verifies:
+
+- All interfaces have corresponding implementation mappings.
+- No circular dependencies exist among registered services.
+
+This proactive validation prevents runtime exceptions and simplifies debugging.
+
+### How IntegrityCheck Works
+
+- It traverses service implementation constructors recursively.
+- Detects if any constructor dependencies are missing mappings.
+- Detects circular references by tracking the resolution chain and throws an exception if found.
+
+<Tip>
+Always run `IntegrityCheck()` after registering all your services and before resolving any instances. It guarantees your dependency graph is valid.
+</Tip>
+
+---
+
+## 2. Running the Example Integrity Check
+
+The BSP.Example project demonstrates how to use `IntegrityCheck()`.
+
+### Step-by-Step Validation
+
+<Steps>
+<Step title="Add Service Mappings">
+Register services with appropriate lifetimes in `ServiceMappingStore`. Example from `CaseRunner.cs`:
+
+```csharp
+serviceMappingStore.AddSingleton<IDepInterface1, DepClass1>();
+serviceMappingStore.AddTransient<IDepInterface2, DepClass2>();
+serviceMappingStore.AddScoped<IDepInterface3, DepClass3>();
+serviceMappingStore.AddScoped<IDepInterface4, DepClass4>();
+serviceMappingStore.AddTransient<IDepInterface5, DepClass5>();
+```
+</Step>
+<Step title="Run Integrity Check">
+Invoke the check to validate your setup:
+
+```csharp
+serviceMappingStore.IntegrityCheck();
+```
+
+Expected output:
+
+```
+Checking integrity for: DepClass1
+Checking integrity for: DepClass2
+Checking integrity for: DepClass3
+Checking integrity for: DepClass4
+Checking integrity for: DepClass5
+```
+</Step>
+</Steps>
+
+### What Happens Under the Hood?
+
+- The check verifies that all constructor dependencies are registered.
+- It prints progress messages to the console.
+
+---
+
+## 3. Common Errors & How to Resolve Them
+
+### Circular Dependency Detected
+
+If a circular reference exists, e.g., registering circular interfaces (`ICircSelf`, `ICircOther1`, `ICircOther2`), you will see an exception like:
+
+```
+Exception: Circular reference detected. CircSelf -> CircSelf
+```
+
+**Resolution:** Remove or redesign your registrations to break the cycle.
+
+### Missing Dependency Mapping
+
+If a constructor has a parameter interface with no registered implementation, the following error occurs:
+
+```
+Exception: IDepInterfaceX mapping not added.
+```
+
+**Resolution:** Add the required binding in `ServiceMappingStore` before calling `IntegrityCheck()`.
+
+### Duplicate or Conflicting Registrations
+
+Duplicating interface registrations without intended overrides may cause runtime conflicts.
+
+**Resolution:** Ensure each interface maps only once or intentionally replace existing bindings with clear understanding.
+
+<Warning>
+The framework does not support multiple bindings for the same interface with fallbacks or conditional logic. Use explicit mappings.
+</Warning>
+
+---
+
+## 4. Troubleshooting Tips
+
+- **Stepwise Registration:** Register one service at a time and run `IntegrityCheck()` frequently to isolate errors.
+- **Review Console Logs:** The console prints diagnostic messages showing which types are being checked and instantiated.
+- **Scope Awareness:** Scoped and Singleton lifetimes behave differently; understand your service lifetimes to prevent unexpected behaviors.
+- **Refer to Example:** Use the `BSP.Example.Cases.CaseRunner` class as a model for common usage.
+
+<Note>
+If using circular dependencies intentionally, consider refactoring to use factory patterns or lazy initialization to avoid infinite loops.
+</Note>
+
+---
+
+## 5. Verification and Next Steps
+
+After passing the integrity checks:
+
+- Proceed to create a `Scope` and resolve instances safely.
+- Call methods on resolved instances such as `.DoThing()` to verify functional operation.
+- Examine console output for unique IDs generated (GUIDs) to understand instance lifetimes.
+
+Example:
+
+```csharp
+var scope = new Scope(serviceMappingStore);
+var instance = scope.GetInstance<IDepInterface5>();
+instance.DoThing();
+```
+
+**Expected Output:** A series of calls showing all nested dependencies executing without errors.
+
+---
+
+## 6. Additional Resources
+
+- [Quick Start: From Registration to Resolution](https://your-docs-link/overview/architecture-features-getting-started/quick-start-example) for a stepwise example.
+- [Basic Setup & Configuration](https://your-docs-link/guides/getting-started/basic-setup) for detailed registration guidance.
+- [Registering and Managing Services](https://your-docs-link/guides/getting-started/registering-services) for lifetime management.
+
+---
+
+## Summary Diagram of Validation Flow
+
+```mermaid
+flowchart TD
+    A[Add Service Mappings to ServiceMappingStore] --> B[Call IntegrityCheck()]
+    B --> C{Are All Dependencies Registered?}
+    C -- Yes --> D{Is Circular Dependency Detected?}
+    C -- No --> E[Throw Missing Mapping Exception]
+    D -- No --> F[Validation Success, Proceed to Resolve Instances]
+    D -- Yes --> G[Throw Circular Dependency Exception]
+```
+
+This simple flowchart summarizes the integrity check process you run during setup.
+
+---
+
+By rigorously validating your service registrations and troubleshooting common issues early, you ensure a smooth developer experience and reliable dependency injection behavior in your applications.
+
+Happy coding!
