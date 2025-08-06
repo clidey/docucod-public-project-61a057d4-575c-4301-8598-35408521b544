@@ -3,4 +3,154 @@ title: "Prerequisites & System Requirements"
 description: "Review the minimum system requirements and dependencies needed to use BSP.Dependency.Injection. Learn what frameworks are supported and how to prepare your development environment."
 ---
 
-*This page will automatically be generated from the codebase*
+# Prerequisites & System Requirements for BSP.Dependency.Injection
+
+## Introduction
+Before integrating the BSP.Dependency.Injection framework into your .NET projects, it's critical to ensure your environment meets the system requirements and dependencies necessary for smooth development and runtime stability. This guide outlines the minimum system specifications, supported frameworks, and development environment preparations needed to get started efficiently.
+
+---
+
+## 1. System Requirements
+
+### Supported Operating Systems
+- Windows 10 or later
+- macOS (latest stable release)
+- Linux distributions supporting .NET Core 3.1
+
+### Hardware Requirements
+- Minimum 2 GHz processor (quad-core recommended for development efficiency)
+- At least 4 GB RAM (8 GB+ recommended for larger projects)
+- Minimum 200 MB of free disk space for the framework and dependencies
+
+### .NET Runtime Requirements
+- **.NET Core 3.1 SDK and Runtime**
+  - BSP.Dependency.Injection targets `netcoreapp3.1` as per the project configuration.
+  - You must have .NET Core 3.1 SDK installed for development and building projects.
+  - Ensure runtime availability on deployment machines.
+
+You can download the .NET Core 3.1 SDK and runtime from the official Microsoft website: [https://dotnet.microsoft.com/en-us/download/dotnet/3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1)
+
+---
+
+## 2. Development Environment
+
+### Required Tools
+- **IDE**: Visual Studio 2019 or later, Visual Studio Code, or any preferred C#-compatible editor.
+- **.NET Core CLI**: Ensure `dotnet` command-line tool is accessible in your PATH.
+- **Git**: To clone the BSP.Dependency.Injection repository or contribute to the project.
+
+### Project Setup
+- The BSP.Dependency.Injection core library targets `netcoreapp3.1`.
+- The example project that demonstrates usage also targets `netcoreapp3.1`.
+
+Ensure your IDE supports this target framework for proper build and IntelliSense support.
+
+### Workspace Configuration
+- The provided workspace file (`dependency-injection.code-workspace`) excludes typical version control and build artifact folders (`.git`, `obj`, `bin`, etc.) to keep your development environment clean.
+
+---
+
+## 3. Dependencies & Package Management
+
+### Internal Dependencies
+- BSP.Dependency.Injection is a standalone lightweight library without external package dependencies for dependency injection.
+- Its example project references the core project internally via project references.
+
+### NuGet Packages
+- No additional NuGet packages are required to use BSP.Dependency.Injection in its basic form.
+
+---
+
+## 4. Access & Network Requirements
+
+- No network connectivity is needed to use the framework once downloaded and installed.
+- For initial download, you need internet access to clone the repository or download the SDK.
+- No external API calls or cloud dependencies are required to run or develop with BSP.Dependency.Injection.
+
+---
+
+## 5. Preparing Your Environment Step-by-Step
+
+<Steps>
+<Step title="Install .NET Core 3.1 SDK and Runtime">
+Download and install .NET Core 3.1 SDK and runtime from Microsoft's official site.
+Verify installation by running `dotnet --version` in your terminal. It should display a version starting with `3.1`.
+</Step>
+<Step title="Set Up Your IDE">
+Install and configure Visual Studio 2019 or later, or Visual Studio Code with C# extension.
+Open the BSP.Dependency.Injection solution or workspace.
+</Step>
+<Step title="Clone the Repository">
+Use Git to clone the repository locally:
+```bash
+git clone https://github.com/bspjojo/DependencyInjection.git
+```
+Open the `dependency-injection.code-workspace` in your IDE.
+</Step>
+<Step title="Restore and Build">
+From the solution, restore any packages (if applicable) and build the projects.
+Verify there are no errors and all targets compile successfully.
+</Step>
+</Steps>
+
+---
+
+## 6. Troubleshooting Common Environment Issues
+
+<AccordionGroup title="Common Setup Problems and How to Fix Them">
+<Accordion title=".NET Core SDK Not Found">
+- **Issue**: Running `dotnet` commands fail.
+- **Solution**: Confirm .NET Core SDK 3.1 was installed correctly and added to PATH.
+- Run `dotnet --info` to verify installation.
+</Accordion>
+<Accordion title="Project Targets Unsupported Framework">
+- **Issue**: Opening projects with IDE shows unsupported target framework error.
+- **Solution**: Verify your IDE supports .NET Core 3.1.
+- Install workloads or update IDE to latest release.
+</Accordion>
+<Accordion title="Build Errors Related to Missing Dependencies">
+- **Issue**: Build fails due to missing dependencies.
+- **Solution**: BSP.Dependency.Injection has no external package dependencies in core.
+- Ensure you have restored all NuGet packages.
+- Clean and rebuild the solution.
+</Accordion>
+<Accordion title="Version Conflicts with Mono or Other Runtimes">
+- **Issue**: Conflicting runtime errors on non-Windows OS.
+- **Solution**: Remove conflicting runtimes or explicitly set `DOTNET_ROOT` environment variable.
+- Use supported .NET Core runtime installations.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## 7. Summary
+The BSP.Dependency.Injection framework requires a modern development environment with .NET Core 3.1 SDK/runtime and a compatible IDE. The library is designed to run on all platforms supporting that framework, with minimal dependencies and straightforward setup.
+
+By ensuring your system meets these prerequisites, you are positioned to build, configure, and run dependency injection scenarios effectively with BSP.Dependency.Injection.
+
+For next steps, see the [Installation Instructions guide](/getting-started/setup-and-installation/installation) and the [Configuration & Setup](/getting-started/quickstart-experience/configuration-setup) pages.
+
+---
+
+## Related Documentation
+- [Product Introduction & Value](/overview/introduction-core-concepts/product-introduction-value)
+- [Core Concepts & Terminology](/overview/introduction-core-concepts/core-terminology-concepts)
+- [Quick Start Example](/overview/architecture-features-getting-started/quick-start-example)
+- [System Architecture & Data Flow](/overview/architecture-features-getting-started/architecture-visual)
+
+---
+
+<Check>Ensure your development environment fully supports .NET Core 3.1 before proceeding to installation and configuration steps to avoid runtime issues.</Check>
+
+---
+
+## Sample Command to Verify .NET Core SDK Installation
+```bash
+dotnet --version
+```
+Expected output (or similar):
+```
+3.1.426
+```
+
+If this command fails or returns a different version, install or update .NET Core SDK 3.1 accordingly.
