@@ -1,0 +1,185 @@
+---
+title: "First Successful Run"
+description: "Follow a guided example to run your first dependency injection scenario with BSP. The example walks through registering services, creating scopes, resolving instances, and invoking methods to verify success."
+---
+
+# First Successful Run
+
+Welcome to your first hands-on experience with the BSP Dependency Injection Framework. This guide walks you through running the included example project, showcasing how to register services, create scopes, resolve dependencies, and invoke methods to confirm everything is working as expected.
+
+---
+
+## 1. Understanding the Example Project Setup
+
+The BSP.Example project demonstrates practical usage of the framework with a collection of service interfaces and classes that depend on each other in various ways. The key components involved are:
+
+- **ServiceMappingStore**: Registers services with their lifetimes (Singleton, Scoped, Transient).
+- **Scope**: Resolves service instances based on the current registration and lifetime.
+- **CaseRunner**: Orchestrates service registration, integrity validation, scope creation, and instance resolution.
+
+This project is a .NET Core Console application targeting .NET Core 3.1.
+
+---
+
+## 2. Prerequisites
+
+Before running the example, confirm the following:
+
+- You have [.NET Core SDK 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1) installed.
+- You are using an IDE or command line environment capable of building and running .NET Core projects.
+- The BSP.Dependency.Injection and BSP.Example projects are loaded together in a workspace or solution.
+
+<Check>
+Ensure that both `BSP.Dependency.Injection.csproj` and `BSP.Example.csproj` projects are restored and built successfully.
+</Check>
+
+---
+
+## 3. Running the Example
+
+Follow these step-by-step instructions to run the example and see the framework in action.
+
+<Steps>
+<Step title="Build the Solution">
+Execute the build command to compile the project.
+
+```bash
+cd BSP.Example
+dotnet build
+```
+
+Look out for a successful build message with no errors.
+</Step>
+
+<Step title="Execute the Program">
+Run the example console application to start the dependency injection scenario.
+
+```bash
+dotnet run
+```
+
+You should see an output starting with "Hello World!" followed by detailed logs of service construction and method invocations.
+</Step>
+
+<Step title="Examine the Output">
+The program will:
+
+- Register five services with different lifetimes.
+- Perform an integrity check to ensure no circular or missing bindings exist.
+- Create a resolution scope.
+- Resolve an instance of `IDepInterface5` and invoke its `DoThing()` method, which triggers a nested chain of method calls across dependencies.
+- Open a new scope and resolve `IDepInterface2` again, invoking its method to show scoped and transient behavior.
+
+Expected console output shows unique identifiers for each instance, verifying lifetimes are respected and dependencies resolved correctly.
+</Step>
+</Steps>
+
+---
+
+## 4. How the Example Works
+
+### Service Registration
+
+Services are registered in `CaseRunner.Run()` with three lifetimes:
+
+- **Singleton**: One instance for the application life. Example: `IDepInterface1` → `DepClass1`.
+- **Scoped**: One instance per resolution scope. Examples: `IDepInterface3` → `DepClass3`, `IDepInterface4` → `DepClass4`.
+- **Transient**: New instance upon each request. Examples: `IDepInterface2` → `DepClass2`, `IDepInterface5` → `DepClass5`.
+
+### Integrity Check
+
+Before resolving, `serviceMappingStore.IntegrityCheck()` verifies there's no circular dependency or missing mappings. This ensures predictable and safe service graph resolution.
+
+### Scope and Resolution
+
+Creating a `Scope` object allows resolving instances with the correct lifetime management. Calling `scope.GetInstance<T>()` recursively constructs the dependency graph, respecting singleton, scoped, and transient rules.
+
+### Invoking Methods
+
+Calling `DoThing()` on the resolved root instance cascades through all dependencies, printing unique IDs and demonstration messages that validate correct wiring and lifecycle handling.
+
+---
+
+## 5. Walkthrough of Sample Output
+
+Here is an example snippet you might see:
+
+```plaintext
+Hello World!
+BSP.Example.Cases.Classes.IDepInterface5 to BSP.Example.Cases.Classes.DepClass5 in scope Transient
+BSP.Example.Cases.Classes.IDepInterface4
+BSP.Example.Cases.Classes.IDepInterface3
+BSP.Example.Cases.Classes.IDepInterface2
+BSP.Example.Cases.Classes.IDepInterface1
+DepClass5.DoThing - 86e62f10-65b5-4d58-a53b-3e6a36bd879e
+DepClass4.DoThing - 92d71d0a-d8a9-4428-bde0-0a31d8e34e5c
+DepClass3.DoThing - 765e5e96-81cc-4252-8f4c-39c7533ac615
+DepClass2.DoThing - 2daf62ce-fae4-4bd9-8b17-4f3d56c1a3fc
+DepClass1.DoThing - 11632a4e-54e7-4dfd-b41a-e1431492ad58
+-----------------------------
+new scope
+BSP.Example.Cases.Classes.IDepInterface2 to BSP.Example.Cases.Classes.DepClass2 in scope Transient
+BSP.Example.Cases.Classes.IDepInterface1
+DepClass2.DoThing - 67921484-5836-484d-bb36-7479f5674ae2
+DepClass1.DoThing - 11632a4e-54e7-4dfd-b41a-e1431492ad58
+-----------------------------
+```
+
+Notice:
+
+- Unique GUID values for each instance demonstrate distinct lifetimes.
+- Singleton instance `DepClass1` is reused in both calls.
+- Transient and scoped lifetimes instantiate appropriately.
+
+---
+
+## 6. Common Pitfalls and Troubleshooting
+
+<AccordionGroup title="Troubleshooting & Tips">
+<Accordion title="Circular Dependency Detected Exception">
+If you uncomment the circular dependency registrations (`ICircSelf`, `ICircOther1`, `ICircOther2`) in `CaseRunner.Run()`, you will encounter an exception during the integrity check.
+
+**Fix:** Remove or properly refactor circular dependencies or use appropriate lifetime scoping to resolve them safely.
+</Accordion>
+
+<Accordion title="Missing Service Mapping Exception">
+If you forget to register an interface used as a constructor parameter, the `IntegrityCheck` will throw an exception stating the mapping was not added.
+
+**Fix:** Ensure all interfaces used in constructors are registered before running.
+</Accordion>
+
+<Accordion title="Unexpected Null or Missing Instance">
+If any constructor fails due to missing parameters or misconfiguration, resolution might fail.
+
+**Fix:** Double-check registration lifetimes and confirm all dependencies are properly mapped and registered.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## 7. Next Steps
+
+Once you've successfully run this example:
+
+- Review the **Configuration & Setup** guide to learn detailed registration patterns and lifetimes.
+- Explore the **Quick Start: From Registration to Resolution** for advanced resolution scenarios.
+- Investigate **Validation & Troubleshooting** for deeper insights into resolving errors and optimizing your service graph.
+- Dive into **Registering and Managing Services** for granular control over your dependency injection lifecycle.
+
+Use this practical example as your foundation for integrating BSP Dependency Injection Framework into your .NET Core projects with confidence.
+
+---
+
+## References
+
+- [BSP Dependency Injection Overview](../overview/introduction-core-concepts/product-introduction-value)
+- [Installation Instructions](../setup-and-installation/installation)
+- [Configuration & Setup](./configuration-setup)
+- [Quick Start Example](../../overview/architecture-features-getting-started/quick-start-example)
+- [Validation & Troubleshooting](./validation-and-troubleshooting)
+
+---
+
+<Info>
+For source code and further exploration, visit the BSP Dependency Injection [GitHub Repository](https://github.com/bspjojo/DependencyInjection).
+</Info>

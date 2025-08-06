@@ -1,0 +1,94 @@
+{
+  "background": {
+    "decoration": "gradient"
+  },
+  "colors": {
+    "dark": "#1E3A8A",
+    "light": "#60A5FA",
+    "primary": "#60A5FA"
+  },
+  "favicon": "/favicon.svg",
+  "fonts": {
+    "family": "Montserrat",
+    "format": "woff2",
+    "source": "https://fonts.gstatic.com/s/googlesansflex/v5/t5sJIQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8Ju1x6sKCyp0l9sI40swNJwGpVd4AZzz0v6lJ4qFXNZhGjLvDSkV4USKMo6qQzwliVdHAy9jxTDHg_ugnAakpwGc-cxgUqDCIUI.woff2"
+  },
+  "icons": {
+    "library": "fontawesome"
+  },
+  "logo": {
+    "dark": "./logo/logo.svg",
+    "light": "./logo/logo.svg"
+  },
+  "name": "BSP.Dependency.Injection",
+  "navigation": {
+    "tabs": [
+      {
+        "groups": [
+          {
+            "group": "Introduction \u0026 Core Concepts",
+            "pages": [
+              "overview/introduction-core-concepts/product-introduction-value",
+              "overview/introduction-core-concepts/target-audience-use-cases",
+              "overview/introduction-core-concepts/core-terminology-concepts"
+            ]
+          },
+          {
+            "group": "Architecture, Features \u0026 Quick Start",
+            "pages": [
+              "overview/architecture-features-getting-started/architecture-visual",
+              "overview/architecture-features-getting-started/feature-highlights",
+              "overview/architecture-features-getting-started/quick-start-example"
+            ]
+          }
+        ],
+        "tab": "Overview"
+      },
+      {
+        "groups": [
+          {
+            "group": "Setup \u0026 Installation",
+            "pages": [
+              "getting-started/setup-and-installation/prerequisites-requirements",
+              "getting-started/setup-and-installation/installation"
+            ]
+          },
+          {
+            "group": "Quickstart Experience",
+            "pages": [
+              "getting-started/quickstart-experience/configuration-setup",
+              "getting-started/quickstart-experience/first-run",
+              "getting-started/quickstart-experience/validation-and-troubleshooting"
+            ]
+          }
+        ],
+        "tab": "Getting Started"
+      },
+      {
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "guides/getting-started/basic-setup",
+              "guides/getting-started/registering-services",
+              "guides/getting-started/resolving-instances"
+            ]
+          },
+          {
+            "group": "Real-World Usage \u0026 Best Practices",
+            "pages": [
+              "guides/real-world-usage/use-cases",
+              "guides/real-world-usage/di-patterns",
+              "guides/real-world-usage/performance-optimization"
+            ]
+          }
+        ],
+        "tab": "Guides"
+      }
+    ]
+  },
+  "styling": {
+    "codeblocks": "dark",
+    "eyebrows": "breadcrumbs"
+  }
+}

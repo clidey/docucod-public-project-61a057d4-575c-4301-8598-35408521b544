@@ -1,0 +1,214 @@
+---
+title: "Configuration & Setup"
+description: "Learn how to configure BSP.Dependency.Injection for your application, including adding and mapping services. This page explains core concepts, guided through the example files."
+---
+
+# Configuration & Setup
+
+Learn how to configure BSP.Dependency.Injection for your .NET application by adding, mapping, and managing your services. This guide demystifies the core concepts of service registration and dependency mapping through practical examples from the BSP Example project.
+
+---
+
+## 1. Understanding Service Registration
+
+At the heart of BSP.Dependency.Injection is the **ServiceMappingStore**, where you declare the relationship between service interfaces and their concrete implementations. Configuring the framework correctly begins with adding your services here.
+
+### Service Lifetimes
+BSP supports three lifetimes specifying the scope of your service instances:
+
+- **Singleton**: Only one instance is created and shared throughout the application's lifetime.
+- **Scoped**: One instance per scope (typically per request or operation).
+- **Transient**: A new instance is created every time the service is requested.
+
+### Registering Services
+Use the following methods on `ServiceMappingStore` to map your interface to implementation:
+
+```csharp
+serviceMappingStore.AddSingleton<IService, ServiceImpl>();
+serviceMappingStore.AddScoped<IService, ServiceImpl>();
+serviceMappingStore.AddTransient<IService, ServiceImpl>();
+```
+
+Each registers the service with the corresponding lifecycle.
+
+### Example from BSP.Example
+In the `CaseRunner` class, we configure various services demonstrating all lifetimes:
+
+```csharp
+var serviceMappingStore = new ServiceMappingStore();
+serviceMappingStore.AddSingleton<IDepInterface1, DepClass1>();
+serviceMappingStore.AddTransient<IDepInterface2, DepClass2>();
+serviceMappingStore.AddScoped<IDepInterface3, DepClass3>();
+serviceMappingStore.AddScoped<IDepInterface4, DepClass4>();
+serviceMappingStore.AddTransient<IDepInterface5, DepClass5>();
+```
+
+This snippet registers five different dependencies with lifetimes optimized for their usage.
+
+<Note>
+Always register every interface your services depend on before resolving instances. Missing registrations cause runtime exceptions.
+</Note>
+
+## 2. Running Integrity Checks
+
+Before resolving instances, call `IntegrityCheck()` on your `ServiceMappingStore`. It verifies that dependency graphs have no circular references and all dependencies are registered.
+
+```csharp
+serviceMappingStore.IntegrityCheck();
+```
+
+### What This Does
+- Detects circular dependencies that would cause infinite recursion.
+- Ensures every interface mapped in constructors is registered.
+
+### Handling Integrity Exceptions
+If a circular dependency or missing mapping is found, the framework throws an exception with detailed information. For example:
+
+```
+Exception: Circular reference detected. CircSelf -> CircSelf
+```
+
+<Warning>
+Integrity checks must be part of your startup routine to catch configuration errors early and prevent runtime failures.
+</Warning>
+
+## 3. Creating and Using a Scope
+
+With your services registered and validated, create a `Scope` to resolve instances with respect to their lifetimes.
+
+```csharp
+var scope = new Scope(serviceMappingStore);
+```
+
+### Requesting Service Instances
+Use `GetInstance<T>()` on the scope to obtain fully resolved service objects, including their dependencies:
+
+```csharp
+var instance = scope.GetInstance<IDepInterface5>();
+instance.DoThing();
+```
+
+This call recursively resolves all nested dependencies according to their defined lifetimes.
+
+### How Lifetimes Affect Instances
+- **Singleton** services are created once per `Scope` object. Subsequent resolutions return the cached instance.
+- **Scoped** services are created once per call to `GetInstance<T>()` within the same resolution chain.
+- **Transient** services are created new each time they're requested.
+
+<Info>
+Instances are created using reflection to invoke single constructors with parameters resolved automatically from registered services.
+</Info>
+
+## 4. Example Walkthrough: Using Configuration in BSP.Example
+
+Let's walk through the main steps demonstrated in the BSP Example's `CaseRunner` class.
+
+<Steps>
+<Step title="Step 1: Initialize Service Mapping Store">
+Create a new instance of `ServiceMappingStore`. This is where you will register all your service interface to implementation mappings.
+
+```csharp
+var serviceMappingStore = new ServiceMappingStore();
+```
+</Step>
+<Step title="Step 2: Register Services">
+Add your services with appropriate lifetimes. For example:
+
+```csharp
+serviceMappingStore.AddSingleton<IDepInterface1, DepClass1>();
+serviceMappingStore.AddTransient<IDepInterface2, DepClass2>();
+serviceMappingStore.AddScoped<IDepInterface3, DepClass3>();
+```
+</Step>
+<Step title="Step 3: Perform Integrity Check">
+Run the integrity check to ensure all dependencies are properly registered and no circular references exist.
+
+```csharp
+serviceMappingStore.IntegrityCheck();
+```
+If an error is thrown, fix registrations accordingly.
+</Step>
+<Step title="Step 4: Create a Scope">
+Instantiate a new `Scope` passing your `ServiceMappingStore`. This manages instance lifetimes.
+
+```csharp
+var scope = new Scope(serviceMappingStore);
+```
+</Step>
+<Step title="Step 5: Resolve and Use Instances">
+Request your root service and call its methods:
+
+```csharp
+var instance = scope.GetInstance<IDepInterface5>();
+instance.DoThing();
+```
+This triggers recursive resolution and method execution.
+</Step>
+</Steps>
+
+## 5. Common Configuration Pitfalls & Tips
+
+<AccordionGroup title="Troubleshooting Configuration Issues">
+<Accordion title="Missing Service Registrations">
+If a constructor parameter type is not registered, you will encounter:
+
+```
+Exception: SomeInterface mapping not added.
+```
+
+Ensure that every interface used by dependencies is added to `ServiceMappingStore`.
+</Accordion>
+<Accordion title="Circular Dependencies">
+If your services reference each other in a cycle, an exception like this will appear:
+
+```
+Exception: Circular reference detected. ServiceA -> ServiceB -> ServiceA
+```
+
+Resolve this by redesigning dependencies or splitting services to break the cycle.
+</Accordion>
+<Accordion title="Multiple Constructors on Implementation">
+BSP expects each implementation to have exactly one public constructor. Multiple constructors will cause resolution to fail.
+
+Review your classes and unify constructors.
+</Accordion>
+<Accordion title="Incorrect Service Lifetime Choices">
+Choosing improper lifetimes can lead to unexpected behaviors such as stale state or excessive object creation. Follow these best practices:
+
+- Use **Singleton** for stateless, reusable services.
+- Use **Scoped** for services that maintain state within a logical operation.
+- Use **Transient** for lightweight services with no shared state.
+</Accordion>
+</AccordionGroup>
+
+## 6. Summary
+
+Proper configuration of BSP.Dependency.Injection centers on **mapping your service interfaces to implementations with correct lifetimes**, validating your graph with integrity checks, then using a `Scope` to resolve instances safely. The BSP Example project demonstrates these steps clearly and serves as a perfect reference.
+
+Explore the following next steps once configuration is understood:
+- Running your first scoped operation in the `Scope`
+- Inspecting lifecycle behavior with different lifetimes
+- Deeper troubleshooting and best practices for complex dependency graphs
+
+---
+
+## Additional References
+
+- [Quick Start: From Registration to Resolution](https://docs.example.com/overview/architecture-features-getting-started/quick-start-example)
+- [Core Concepts & Terminology](https://docs.example.com/overview/introduction-core-concepts/core-terminology-concepts)
+- BSP Example source code available in `BSP.Example` folder
+
+<Check>
+Make sure to check the [Installation Instructions](/getting-started/setup-and-installation/installation) page to ensure your projects are properly set up with the BSP.Dependency.Injection NuGet package.
+</Check>
+
+---
+
+## Source Code Links
+
+For detailed reference, you can examine the main classes involved in configuration:
+
+- [ServiceMappingStore.cs](https://github.com/bspjojo/DependencyInjection/blob/main/BSP.Dependency.Injection/DependencyInjection/ServiceMappingStore.cs)
+- [Scope.cs](https://github.com/bspjojo/DependencyInjection/blob/main/BSP.Dependency.Injection/DependencyInjection/Scope.cs)
+- [CaseRunner.cs (Example)](https://github.com/bspjojo/DependencyInjection/blob/main/BSP.Example/Cases/CaseRunner.cs)
+

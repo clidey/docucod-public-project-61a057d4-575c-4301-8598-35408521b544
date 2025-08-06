@@ -1,0 +1,178 @@
+---
+title: "System Architecture & Data Flow"
+description: "Visually map out how the core components (ServiceMappingStore, Scope, and injection targets) collaborate at runtime. Includes a mermaid diagram for rapid comprehension of service resolution and lifecycle within the framework."
+---
+
+# System Architecture & Data Flow
+
+Understanding how the core components of the BSP Dependency Injection framework collaborate is essential to mastering service resolution and lifecycle management. This documentation clearly visualizes the roles and interactions between the **ServiceMappingStore**, **Scope**, and injection targets during runtime, enabling you to see the data flow and lifecycle boundaries that power your dependency graph.
+
+---
+
+## Why This Matters
+
+Dependency Injection (DI) frameworks empower you to write flexible, testable, and maintainable code by abstracting how dependencies are created and managed. Knowing how services are registered, resolved, and scoped helps avoid common pitfalls such as circular dependencies or lifecycle mismatches. This page breaks down the runtime architecture so you understand exactly how your registrations translate to live object graphs.
+
+---
+
+## Core Components Overview
+
+### ServiceMappingStore
+
+The **ServiceMappingStore** is your registry and integrity gatekeeper.
+
+- **Purpose:** Maintains all service registrations including their interface-to-implementation mappings and associated lifetimes (singleton, scoped, transient).
+- **Integrity Checks:** Validates your dependency graph to prevent circular references before runtime.
+
+### Scope
+
+The **Scope** represents the boundary where service instances are resolved.
+
+- **Purpose:** Resolves requested service instances according to their scopes: singleton instances are shared globally, scoped instances live per resolution scope, and transient instances are freshly created every time.
+- **Instance Tracking:** Maintains internal caches to comply with the lifetime policies, ensuring singleton and scoped lifetimes are honored.
+
+### Injection Targets (Services)
+
+These are the concrete classes implementing your interfaces, which the framework instantiates and wires automatically.
+
+- Dependencies declared in constructors are recursively resolved by the Scope using the rules defined in the ServiceMappingStore.
+- Each service behaves according to its lifetime, ensuring consistency and reducing unexpected side effects.
+
+---
+
+## Runtime Data Flow
+
+This diagram illustrates how the components collaborate during resolution of a dependency:
+
+```mermaid
+flowchart TD
+
+    subgraph Service Registration
+        SMS["ServiceMappingStore\n(Registry & Integrity Checker)"]
+    end
+
+    subgraph Instance Resolution
+        ScopeObj["Scope\n(Resolves & Tracks Instances)"]
+        ImplType["Concrete Implementation Type"]
+        Constructor["Constructor Injection"]
+        Dependencies["Dependency Instances"]
+    end
+
+    subgraph Object Lifetimes
+        SingletonCache["Singleton Instances Cache"]
+        ScopedCache["Scoped Instances Cache"]
+        Transient["Transient - New Each Time"]
+    end
+
+    %% Relationships
+    UserRequest["Resolve Service T"] -->|Calls GetInstance<T>()| ScopeObj
+    ScopeObj -->|Queries| SMS
+    SMS -->|Returns Implementation & Lifetime| ScopeObj
+    ScopeObj -->|Checks existing instance in| SingletonCache
+    ScopeObj -->|Checks existing instance in| ScopedCache
+    ScopeObj -->|Invokes constructor with| Constructor
+    Constructor -->|Resolves each dependency by calling Scope recursively| Dependencies
+    Dependencies --> ScopeObj
+    ScopeObj -->|Creates new instance according to lifecycle| ImplType
+    ImplType -->|Stores in cache if singleton or scoped| SingletonCache
+    ImplType -->|Stores in cache if scoped| ScopedCache
+    ImplType -->|Returns new instance| UserRequest
+
+    %% Styling
+    classDef component fill:#b3d4fc,stroke:#2a5f9e,stroke-width:1px;
+    class SMS,ScopeObj,SingletonCache,ScopedCache component;
+
+```
+
+---
+
+## Step-by-Step Flow Explanation
+
+1. **Service Request**: Your code requests an instance of interface `T` via `Scope.GetInstance<T>()`.
+2. **Lookup Mapping**: The Scope queries the ServiceMappingStore for the concrete implementation type and the binding scope of `T`.
+3. **Instance Cache Check**:
+   - If the service is a singleton, Scope checks the global singleton cache.
+   - For scoped lifetimes, it checks the scoped cache for existing instances.
+   - Transient always creates a new instance.
+4. **Dependency Resolution**: If no existing instance is found, Scope reflects on the constructor of the implementation type.
+   - It recursively resolves each constructor dependency by repeating this entire process.
+5. **Instance Creation**:
+   - Scope creates the new instance either parameterless or passing resolved dependencies.
+   - Stores the instance in the appropriate cache based on lifetime.
+6. **Instance Returned**: Finally, the fully constructed service instance is returned to the caller.
+
+---
+
+## Practical Example
+
+Consider a service `IDepInterface5` registered as transient, which depends on `IDepInterface4` (scoped), and `IDepInterface3` (scoped), and so forth:
+
+- On `scope.GetInstance<IDepInterface5>()`:
+  - Transient means a fresh instance every time, so Scope will instantiate `DepClass5`.
+  - For constructor params, it resolves `IDepInterface4` and `IDepInterface3`:
+    - If these are scoped, Scope checks the scoped cache.
+    - If not present, constructs and adds them to the scoped cache.
+  - This cascades down to dependencies like `IDepInterface2` and `IDepInterface1`, with singleton and transient lifetimes applied appropriately.
+
+This ensures consistent object graphs with correct lifetimes and automatic wiring.
+
+---
+
+## Common Pitfalls & Tips
+
+- **Circular Dependencies**: The ServiceMappingStore checks for circular references and will fail before runtime. Avoid registering circular dependencies or redesign your services.
+
+- **Singleton vs Scoped Lifetimes**: Singleton instances live for the entire application lifetime. Scoped instances live only per resolution scope. Understanding your object lifetimes prevents stale data and unintended sharing.
+
+- **Transient Efficiency**: Use transient services for lightweight or short-lived dependencies to avoid unnecessary memory usage.
+
+- **Scope Boundaries**: Create and dispose scopes carefully when used in larger applications to control scoped instance lifetimes explicitly.
+
+---
+
+## Next Steps
+
+- Proceed to [Key Features at a Glance](/overview/architecture-features-getting-started/feature-highlights) to discover what makes this framework stand out.
+- Review [Quick Start: From Registration to Resolution](/overview/architecture-features-getting-started/quick-start-example) for hands-on experience.
+- Explore [Core Concepts & Terminology](/overview/introduction-core-concepts/core-terminology-concepts) to deepen foundational understanding.
+
+---
+
+## Reference Code Snippet for Scope Resolution
+
+```csharp
+public T GetInstance<T>()
+{
+    return (T)GetObjectInstance(typeof(T), new Dictionary<Type, object>());
+}
+
+private object GetObjectInstance(Type t, Dictionary<Type, object> scopedInstances)
+{
+    var tType = _serviceMappingStore.GetImplementationTypeForBinding(t);
+    var injectionScope = _serviceMappingStore.GetScopeForBinding(t);
+
+    var existing = GetExistingInstanceOfTypeForScope(tType, scopedInstances, injectionScope);
+    if (existing != null)
+    {
+        return existing;
+    }
+
+    var constructor = tType.GetConstructors().Single();
+    var paramInfos = constructor.GetParameters();
+
+    if (paramInfos.Length == 0)
+    {
+        return CreateParameterlessInstance(tType, scopedInstances, injectionScope);
+    }
+
+    var constructorArgs = new List<object>();
+    foreach(var p in paramInfos)
+    {
+        constructorArgs.Add(GetObjectInstance(p.ParameterType, scopedInstances));
+    }
+
+    return CreateParameterInstance(tType, constructorArgs.ToArray(), scopedInstances, injectionScope);
+}
+```
+
+This snippet exemplifies how Scope traverses constructor parameters recursively, honoring the lifecycle of each dependency.
