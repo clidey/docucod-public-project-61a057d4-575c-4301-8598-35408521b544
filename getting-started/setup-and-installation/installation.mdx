@@ -3,4 +3,182 @@ title: "Installation Instructions"
 description: "Get step-by-step instructions to install BSP.Dependency.Injection on your preferred platform. Includes package reference methods and basic integration steps, enabling you to get up and running quickly."
 ---
 
-*This page will automatically be generated from the codebase*
+# Installation Instructions
+
+Get step-by-step instructions to install the **BSP.Dependency.Injection** framework on your development machine or in your .NET projects. This guide covers package referencing methods for all supported environments and the minimal integration steps required to start using the framework immediately.
+
+---
+
+## 1. Prerequisites
+
+Before installing BSP.Dependency.Injection, ensure your environment meets the following requirements:
+
+- **Operating System:** Any OS supporting .NET Core 3.1 or later (Windows, macOS, Linux)
+- **.NET SDK:** .NET Core SDK version 3.1 or higher installed
+- **Development Environment:** Visual Studio 2019+, Visual Studio Code, JetBrains Rider, or any compatible IDE
+
+You can verify your .NET SDK installation by running:
+
+```bash
+dotnet --version
+```
+
+It should output version 3.1.x or higher.
+
+<Tip>
+If you do not have the .NET Core SDK installed, download it from the official Microsoft website: https://dotnet.microsoft.com/download/dotnet-core/3.1
+</Tip>
+
+---
+
+## 2. Installation Methods
+
+The BSP.Dependency.Injection framework is distributed as a .NET class library. You can add it to your project using one of these methods:
+
+### 2.1. Via NuGet Package Manager (if available)
+
+> _Note: If the package is available on NuGet.org, you may install with this command:_
+
+```bash
+dotnet add package BSP.Dependency.Injection
+```
+
+### 2.2. Adding the Project Reference Locally
+
+If you cloned the BSP.Dependency.Injection repository manually, add the project directly to your solution.
+
+**Steps:**
+
+1. Clone or download the [BSP.Dependency.Injection repository](https://github.com/bspjojo/DependencyInjection).
+2. Open your solution in Visual Studio or your preferred IDE.
+3. Add a reference to the `BSP.Dependency.Injection.csproj` located in the `BSP.Dependency.Injection` folder.
+
+Example command line to add project reference:
+
+```bash
+dotnet add reference ../BSP.Dependency.Injection/BSP.Dependency.Injection.csproj
+```
+
+---
+
+## 3. Initial Integration
+
+After installation, integrate the framework by adding service registrations to your code. This includes defining your service mappings with desired lifetimes: Singleton, Scoped, or Transient.
+
+### 3.1. Add `using` Directive
+
+Include the namespace where the dependency injection classes reside:
+
+```csharp
+using BSP.Dependency.Injection.DependencyInjection;
+```
+
+### 3.2. Create and Configure a `ServiceMappingStore`
+
+This store manages all your service mappings.
+
+```csharp
+var serviceMappingStore = new ServiceMappingStore();
+
+// Register services with lifetimes
+serviceMappingStore.AddSingleton<IYourService, YourServiceImplementation>();
+serviceMappingStore.AddScoped<IOtherService, OtherServiceImplementation>();
+serviceMappingStore.AddTransient<IAnotherService, AnotherServiceImplementation>();
+
+// Perform integrity check to catch circular dependencies
+serviceMappingStore.IntegrityCheck();
+```
+
+### 3.3. Create a `Scope` to Resolve Services
+
+Instantiate the `Scope` class by passing in your configured `ServiceMappingStore`. Use it to get service instances.
+
+```csharp
+var scope = new Scope(serviceMappingStore);
+
+var myServiceInstance = scope.GetInstance<IYourService>();
+myServiceInstance.DoSomething();
+```
+
+<Tip>
+Calling `IntegrityCheck()` early during startup is essential. This prevents runtime exceptions from circular dependencies or missing service mappings.
+</Tip>
+
+---
+
+## 4. Verification Steps
+
+### 4.1. Build Your Solution
+
+Make sure your project compiles successfully after adding the package and references.
+
+```bash
+dotnet build
+```
+
+### 4.2. Run the Example Application
+
+If you are using the `BSP.Example` project included in the repository, build and run it to see the framework in action.
+
+```bash
+dotnet run --project BSP.Example/BSP.Example.csproj
+```
+
+You should see console output reflecting service instantiation logs and method calls, demonstrating Singleton, Scoped, and Transient lifetimes.
+
+### 4.3. Expected Output Snippet
+
+```
+BSP.Example.Cases.Classes.DepClass5 to BSP.Example.Cases.Classes.DepClass5 in scope Transient
+BSP.Example.Cases.Classes.DepClass4 to BSP.Example.Cases.Classes.DepClass4 in scope Scoped
+... (other logging lines) ...
+DepClass5.DoThing - <GUID>
+DepClass4.DoThing - <GUID>
+...
+```
+
+---
+
+## 5. Troubleshooting Common Issues
+
+<AccordionGroup title="Common Installation and Setup Issues">
+<Accordion title="Missing .NET SDK or Incorrect Version">
+Ensure you have .NET Core SDK 3.1 or higher installed. Running `dotnet --version` should return 3.1.x or higher.
+</Accordion>
+<Accordion title="Project Reference Errors">
+Verify the `BSP.Dependency.Injection.csproj` path is correct and the reference is added to your consuming project.
+</Accordion>
+<Accordion title="Circular Dependency Exceptions on Integrity Check">
+Review your service mappings. The framework's `IntegrityCheck()` method will throw an exception if circular dependencies exist. Remove or refactor these dependencies before continuing.
+</Accordion>
+<Accordion title="Service Not Registered Exception When Resolving">
+Add explicit service mappings for all interfaces before calling `GetInstance<T>()`. Missing bindings will cause exceptions.
+</Accordion>
+</AccordionGroup>
+
+<Tip>
+Start with minimal service registrations and incrementally add more to isolate errors quickly.
+</Tip>
+
+---
+
+## 6. Next Steps
+
+- Proceed to the [Configuration & Setup](../quickstart-experience/configuration-setup) guide to learn how to effectively configure your dependency injection container.
+- Explore the [Quick Start Example](../../overview/architecture-features-getting-started/quick-start-example) for a deep-dive into service registration, scopes, and instance resolution with sample code.
+- Review [Core Concepts & Terminology](../../overview/introduction-core-concepts/core-terminology-concepts) to fully understand the design principles powering this framework.
+
+
+---
+
+## References & Helpful Links
+
+- **GitHub Repository:** [https://github.com/bspjojo/DependencyInjection](https://github.com/bspjojo/DependencyInjection)
+- **NuGet Package Source:** If available, use [NuGet.org](https://www.nuget.org)
+- **BSP.Dependency.Injection Project File:** [BSP.Dependency.Injection/BSP.Dependency.Injection.csproj](https://github.com/bspjojo/DependencyInjection/blob/main/BSP.Dependency.Injection/BSP.Dependency.Injection.csproj)
+- **Example Project:** [BSP.Example](https://github.com/bspjojo/DependencyInjection/tree/main/BSP.Example)
+
+
+---
+
+By following this installation guide, you will have the core framework ready in your project and be able to register and resolve services reliably, setting a solid foundation for building scalable .NET applications with controlled dependency lifecycles.
